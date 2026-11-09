@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Credit Cards with Tier Benefits</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0d0f12;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 1.5rem;
+            color: #a0a5b5;
+        }
+
+        p.hint {
+            color: #5d6373;
+            font-size: 0.85rem;
+            margin-bottom: 60px;
+            letter-spacing: 1px;
+        }
+
+        .card-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            perspective: 1200px;
+        }
+
+        .card-wrapper {
+            width: 320px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-rotator-container {
+            width: 320px;
+            height: 200px;
+            perspective: 1200px;
+            z-index: 2;
+            border-radius: 16px;
+        }
+
+        .card-rotator-container:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.65);
+            outline-offset: 6px;
+        }
+
+        .card-rotator {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-wrapper.flipped .card-rotator {
+            transform: rotateY(180deg) !important;
+        }
+
+        .card-face {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .card-front {
+            padding: 24px;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            padding: 20px 0;
+        }
+
+        .card-face::before {
+            content: '';
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.55), transparent 55%);
+            opacity: 0.5;
+            mix-blend-mode: soft-light;
+            pointer-events: none;
+        }
+
+        .titanium::before {
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(190, 205, 220, 0.4), transparent 55%);
+        }
+
+        .silver {
+            background: linear-gradient(135deg, #f2f4f7 0%, #d7dce3 22%, #a8afb9 46%, #e4e8ec 62%, #b7bdc6 80%, #f2f4f7 100%);
+            color: #2c3e50;
+            box-shadow: 0 18px 34px -10px rgba(15, 20, 30, 0.5);
+        }
+
+        .gold {
+            background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%);
+            color: #3a2802;
+            box-shadow: 0 18px 34px -10px rgba(60, 40, 5, 0.55);
+        }
+
+        .titanium {
+            background: linear-gradient(135deg, #2b2d31 0%, #121212 25%, #3a3d42 48%, #0a0a0a 65%, #232529 82%, #141414 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 18px 34px -10px rgba(0, 0, 0, 0.7);
+        }
+
+        .titanium::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.03),
+                rgba(255,255,255,0.03) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chip {
+            width: 45px;
+            height: 34px;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .silver .chip, .gold .chip {
+            background:
+                repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,0.15) 6px 7px),
+                repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,0.15) 6px 7px),
+                linear-gradient(135deg, #d4af37, #f3e5ab);
+            border: 1px solid #b8860b;
+        }
+
+        .titanium .chip {
+            background:
+                repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,0.25) 6px 7px),
+                repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,0.25) 6px 7px),
+                linear-gradient(135deg, #e0e0e0, #8a8a8a);
+            border: 1px solid #555;
+        }
+
+        .bank-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .card-number {
+            font-size: 1.15rem;
+            letter-spacing: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .card-holder {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+
+        .value {
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .silver .logo { background: rgba(44, 62, 80, 0.12); color: #2c3e50; }
+        .gold .logo { background: rgba(58, 40, 2, 0.15); color: #3a2802; }
+        .titanium .logo { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); }
+
+        .magnetic-strip {
+            width: 100%;
+            height: 40px;
+            background: #111111;
+            margin-top: 10px;
+        }
+
+        .titanium .magnetic-strip {
+            background: #000000;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .signature-container {
+            padding: 0 20px;
+            margin-top: 15px;
+        }
+
+        .signature-bar {
+            background: #ffffff;
+            height: 36px;
+            width: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            position: relative;
+            background-image: repeating-linear-gradient(
+                -45deg,
+                #f2f2f2,
+                #f2f2f2 5px,
+                #e5e5e5 5px,
+                #e5e5e5 10px
+            );
+        }
+
+        .signature {
+            font-family: 'Brush Script MT', 'cursive', sans-serif;
+            color: #1a1a1a;
+            font-size: 1.1rem;
+            position: absolute;
+            left: 15px;
+            transform: rotate(-3deg);
+        }
+
+        .cvv {
+            font-family: 'Courier New', Courier, monospace;
+            color: #111;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .back-info {
+            padding: 0 20px;
+            font-size: 0.45rem;
+            line-height: 1.3;
+            opacity: 0.6;
+            margin-top: 10px;
+        }
+
+        .benefits-box {
+            width: 290px;
+            background: #161920;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: none;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            padding: 30px 20px 20px 20px;
+            margin-top: -15px;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(-20px) scaleY(0.9);
+            transform-origin: top center;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        opacity 0.3s ease, 
+                        box-shadow 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0);
+            pointer-events: none;
+        }
+
+        .card-wrapper:hover .benefits-box {
+            opacity: 1;
+            transform: translateY(0) scaleY(1);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+
+        .benefits-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #a0a5b5;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+
+        .benefits-list {
+            list-style: none;
+        }
+
+        .benefits-list li {
+            font-size: 0.8rem;
+            color: #d1d5db;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            color: #4ade80;
+            margin-right: 8px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .silver-wrapper .benefits-list li::before { color: #a855f7; }
+        .gold-wrapper .benefits-list li::before { color: #eab308; }
+        .titanium-wrapper .benefits-list li::before { color: #38bdf8; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .card-rotator, .benefits-box {
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+    footer {
+      margin-top: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #5d6373;
+      font-size: 0.85rem;
+      margin-bottom: 60px;
+      letter-spacing: 1px;
+    }
+
+    footer a {
+      text-decoration: none;
+      transition: color 0.2s ease;
+      color: #5d6373
+    }
+
+    footer a:hover {
+    text-decoration: underline;
+    color: #ffffff; 
+    }
+    </style>
+</head>
+<body>
+
+    <h1>Select Membership Tier</h1>
+    <p class="hint">Hover for tier benefits • Click card to flip</p>
+
+    <div class="card-container">
+        
+        <div class="card-wrapper silver-wrapper">
+            <div class="card-rotator-container" tabindex="0" role="button" aria-pressed="false" aria-label="Silver card. Press to flip.">
+                <div class="card-rotator">
+                    <div class="card-face card-front silver">
+                        <div class="card-top">
+                            <div class="chip"></div>
+                            <span class="bank-name">Mzansi Bank</span>
+                        </div>
+                        <div class="card-number">4532 •••• •••• 8812</div>
+                        <div class="card-bottom">
+                            <div class="card-holder">
+                                <span class="label">Card Holder</span>
+                                <span class="value">Sipho Dlamini</span>
+                            </div>
+                            <div class="logo">MB</div>
+                        </div>
+                    </div>
+                    <div class="card-face card-back silver">
+                        <div class="magnetic-strip"></div>
+                        <div class="signature-container">
+                            <span class="label">Authorized Signature</span>
+                            <div class="signature-bar">
+                                <span class="signature">Sipho Dlamini</span>
+                                <span class="cvv">842</span>
+                            </div>
+                        </div>
+                        <div class="back-info">
+                            This card is property of Mzansi Bank Ltd. An authorised financial services and registered credit provider (FSP 49211).
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="benefits-box">
+                <div class="benefits-title">Silver Perks</div>
+                <ul class="benefits-list">
+                    <li>1% cashback on grocery shopping</li>
+                    <li>R0 monthly service fee</li>
+                    <li>Free swipes & online payments</li>
+                    <li>24/7 fraud protection via app</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card-wrapper gold-wrapper">
+            <div class="card-rotator-container" tabindex="0" role="button" aria-pressed="false" aria-label="Gold card. Press to flip.">
+                <div class="card-rotator">
+                    <div class="card-face card-front gold">
+                        <div class="card-top">
+                            <div class="chip"></div>
+                            <span class="bank-name">Mzansi Bank</span>
+                        </div>
+                        <div class="card-number">5412 •••• •••• 9041</div>
+                        <div class="card-bottom">
+                            <div class="card-holder">
+                                <span class="label">Card Holder</span>
+                                <span class="value">Sipho Dlamini</span>
+                            </div>
+                            <div class="logo">MB</div>
+                        </div>
+                    </div>
+                    <div class="card-face card-back gold">
+                        <div class="magnetic-strip"></div>
+                        <div class="signature-container">
+                            <span class="label">Authorized Signature</span>
+                            <div class="signature-bar">
+                                <span class="signature">Sipho Dlamini</span>
+                                <span class="cvv">119</span>
+                            </div>
+                        </div>
+                        <div class="back-info">
+                            This card is property of Mzansi Bank Ltd. An authorised financial services and registered credit provider (FSP 49211).
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="benefits-box">
+                <div class="benefits-title">Gold Perks</div>
+                <ul class="benefits-list">
+                    <li>3% fuel rewards at selected stations</li>
+                    <li>Bidvest Premier Lounge access (4x/yr)</li>
+                    <li>Free travel insurance up to R5m</li>
+                    <li>Zero foreign currency conversion fees</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card-wrapper titanium-wrapper">
+            <div class="card-rotator-container" tabindex="0" role="button" aria-pressed="false" aria-label="Titanium card. Press to flip.">
+                <div class="card-rotator">
+                    <div class="card-face card-front titanium">
+                        <div class="card-top">
+                            <div class="chip"></div>
+                            <span class="bank-name">Mzansi Bank</span>
+                        </div>
+                        <div class="card-number">3782 •••• •••• 0005</div>
+                        <div class="card-bottom">
+                            <div class="card-holder">
+                                <span class="label">Card Holder</span>
+                                <span class="value">Sipho Dlamini</span>
+                            </div>
+                            <div class="logo">MB</div>
+                        </div>
+                    </div>
+                    <div class="card-face card-back titanium">
+                        <div class="magnetic-strip"></div>
+                        <div class="signature-container">
+                            <span class="label">Authorized Signature</span>
+                            <div class="signature-bar">
+                                <span class="signature">Sipho Dlamini</span>
+                                <span class="cvv">042</span>
+                            </div>
+                        </div>
+                        <div class="back-info">
+                            This card is property of Mzansi Bank Ltd. An authorised financial services and registered credit provider (FSP 49211).
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="benefits-box">
+                <div class="benefits-title">Titanium Perks</div>
+                <ul class="benefits-list">
+                    <li>5% uncapped rewards on all spend</li>
+                    <li>Unlimited global & VIP airport lounge access</li>
+                    <li>24/7 dedicated private banker</li>
+                    <li>R5,000 annual luxury dining & lifestyle voucher</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+      <footer>
+    Created by <a href="https://github.com/beekay12" target="_blank">github.com/beekay12</a>
+  </footer>
+
+    <script>
+        const wrappers = document.querySelectorAll('.card-wrapper');
+
+        wrappers.forEach(wrapper => {
+            const rotatorContainer = wrapper.querySelector('.card-rotator-container');
+            const rotator = wrapper.querySelector('.card-rotator');
+
+            function toggleFlip() {
+                wrapper.classList.toggle('flipped');
+                rotatorContainer.setAttribute('aria-pressed', wrapper.classList.contains('flipped'));
+                if (wrapper.classList.contains('flipped')) {
+                    rotator.style.transform = '';
+                }
+            }
+
+            rotatorContainer.addEventListener('mousemove', (e) => {
+                const rect = rotatorContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                rotator.style.setProperty('--mx', `${(x / rect.width) * 100}%`);
+                rotator.style.setProperty('--my', `${(y / rect.height) * 100}%`);
+
+                if (wrapper.classList.contains('flipped')) return;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = (y - centerY) / 8;
+                const rotateY = (centerX - x) / 8;
+
+                rotator.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+
+            rotatorContainer.addEventListener('mouseleave', () => {
+                rotator.style.setProperty('--mx', '50%');
+                rotator.style.setProperty('--my', '30%');
+                if (wrapper.classList.contains('flipped')) return;
+                rotator.style.transform = 'rotateX(0deg) rotateY(0deg)';
+            });
+
+            rotatorContainer.addEventListener('click', toggleFlip);
+
+            rotatorContainer.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleFlip();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
